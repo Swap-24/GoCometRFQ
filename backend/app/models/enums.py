@@ -1,0 +1,19 @@
+import enum
+
+class AuctionStatus(str, enum.Enum):
+    UPCOMING = "UPCOMING"
+    ACTIVE = "ACTIVE"
+    CLOSED = "CLOSED"
+    FORCE_CLOSED = "FORCE_CLOSED"
+
+class ExtensionTriggerType(str, enum.Enum):
+    BID_RECEIVED = "BID_RECEIVED"
+    ANY_RANK_CHANGE = "ANY_RANK_CHANGE"
+    L1_RANK_CHANGE = "L1_RANK_CHANGE"
+
+class ActivityEventType(str, enum.Enum):
+    AUCTION_CREATED = "AUCTION_CREATED"
+    BID_SUBMITTED = "BID_SUBMITTED"
+    TIME_EXTENSION = "TIME_EXTENSION"
+    AUCTION_CLOSED = "AUCTION_CLOSED"
+    AUCTION_FORCE_CLOSED = "AUCTION_FORCE_CLOSED"
