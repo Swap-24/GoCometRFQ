@@ -8,7 +8,6 @@ app = FastAPI(
     description="British Reverse Auction RFQ System API with dynamic extensions and forced close rules."
 )
 
-# CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
