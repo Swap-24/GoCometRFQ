@@ -1,5 +1,5 @@
 import React from 'react';
-import { History, Zap, CheckCircle2, Flag, AlertOctagon, ArrowRight } from 'lucide-react';
+import { History, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function ActivityLogTimeline({ logs = [] }) {
   if (!logs || logs.length === 0) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ShieldAlert, Zap, RefreshCw, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Zap, RefreshCw, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 

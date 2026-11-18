@@ -227,7 +227,7 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1 flex items-center justify-between">
+                <label className="flex items-center justify-between text-[11px] font-medium text-gray-600 mb-1">
                   <span>Bid Close Time</span>
                   {!isCloseValid && <span className="text-[10px] text-red-600 font-bold">Must be &gt; Start</span>}
                 </label>
@@ -243,7 +243,7 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-red-700 font-semibold mb-1 flex items-center justify-between">
+                <label className="flex items-center justify-between text-[11px] font-semibold text-red-700 mb-1">
                   <span>Forced Close Ceiling</span>
                   {!isForcedValid && <span className="text-[10px] text-red-600 font-bold">Must be &gt; Close</span>}
                 </label>
