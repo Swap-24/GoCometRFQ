@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ConfigDict
 
 class QuoteBase(BaseModel):
     carrier_name: str = Field(..., min_length=2, max_length=100, description="Carrier / Supplier name")
@@ -14,12 +14,11 @@ class QuoteCreate(QuoteBase):
     pass
 
 class QuoteResponse(QuoteBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     rfq_id: str
     total_price: float
     rank_at_submission: int | None = None
-    current_rank: int | None = None  # Computed dynamically against all active quotes
+    current_rank: int | None = None
     submitted_at: datetime
-
-    class Config:
-        from_attributes = True

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 from app.models.enums import AuctionStatus, ExtensionTriggerType
 from app.schemas.quote import QuoteResponse
 from app.schemas.activity_log import ActivityLogResponse
@@ -25,7 +25,6 @@ class RFQBase(BaseModel):
 class RFQCreate(RFQBase):
     @model_validator(mode="after")
     def validate_auction_deadlines(self):
-        # Ensure UTC comparisons
         start = self.bid_start_time
         close = self.initial_bid_close_time
         forced = self.forced_bid_close_time
@@ -37,6 +36,8 @@ class RFQCreate(RFQBase):
         return self
 
 class RFQListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     reference_id: str
     title: str
@@ -51,7 +52,6 @@ class RFQListItem(BaseModel):
     status: AuctionStatus
     extension_count: int
     
-    # Summary metrics
     lowest_bid_amount: float | None = None
     lowest_bid_carrier: str | None = None
     total_bids_count: int = 0
@@ -60,10 +60,9 @@ class RFQListItem(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class RFQDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     reference_id: str
     title: str
@@ -88,6 +87,3 @@ class RFQDetail(BaseModel):
 
     quotes: list[QuoteResponse] = []
     activity_logs: list[ActivityLogResponse] = []
-
-    class Config:
-        from_attributes = True
