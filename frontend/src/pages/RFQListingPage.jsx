@@ -148,7 +148,7 @@ export default function RFQListingPage({ rfqs = [], isLoading, onSelectRfq, onOp
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search Reference ID or Route..."
+            placeholder="Search RFQ Name or Reference ID..."
             className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
           />
         </div>

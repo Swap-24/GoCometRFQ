@@ -164,14 +164,14 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                RFQ Title / Route
+                RFQ Name
               </label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Shanghai to Rotterdam 40ft HC"
+                placeholder="e.g. Q4 Ocean Freight Procurement"
                 className="w-full px-3 py-1.5 rounded-md bg-white border border-gray-300 text-gray-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
               />
             </div>
