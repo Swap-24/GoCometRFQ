@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Clock, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
   const [referenceId, setReferenceId] = useState(`RFQ-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -76,7 +77,10 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
         extension_trigger_type: triggerType,
       };
 
-      await onCreated(payload);
+      const createdRfq = await api.createRfq(payload);
+      if (onCreated) {
+        await onCreated(createdRfq);
+      }
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to create RFQ');
