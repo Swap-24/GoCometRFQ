@@ -6,7 +6,6 @@ import CountdownTimer from '../components/CountdownTimer';
 import SupplierRankTable from '../components/SupplierRankTable';
 import QuoteSubmissionForm from '../components/QuoteSubmissionForm';
 import ActivityLogTimeline from '../components/ActivityLogTimeline';
-import SimulationToolbar from '../components/SimulationToolbar';
 import { api, createRfqWebSocket } from '../services/api';
 
 export default function RFQDetailPage({ rfqId, onBack }) {
@@ -60,12 +59,6 @@ export default function RFQDetailPage({ rfqId, onBack }) {
 
   async function handleQuoteSubmit(quoteData) {
     const res = await api.submitQuote(rfqId, quoteData);
-    await loadData();
-    return res;
-  }
-
-  async function handleSimulateBid(simData) {
-    const res = await api.simulateBid(rfqId, simData);
     await loadData();
     return res;
   }
@@ -221,13 +214,6 @@ export default function RFQDetailPage({ rfqId, onBack }) {
           <p className="text-[11px] text-gray-500 mt-0.5">Strict stop; cannot extend beyond</p>
         </div>
       </div>
-
-      {/* Evaluator Simulation Console Toolbar */}
-      <SimulationToolbar
-        rfq={rfq}
-        currentL1Price={currentL1Price}
-        onSimulateBid={handleSimulateBid}
-      />
 
       {/* Main Grid: Left = Leaderboard & Logs, Right = Form & Rules */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

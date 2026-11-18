@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Clock, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Clock, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
   const [referenceId, setReferenceId] = useState(`RFQ-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -20,13 +20,13 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
 
   const [bidCloseTime, setBidCloseTime] = useState(() => {
     const d = new Date();
-    d.setMinutes(d.getMinutes() + 20);
+    d.setHours(d.getHours() + 2); // 2 hours from now
     return d.toISOString().slice(0, 16);
   });
 
   const [forcedCloseTime, setForcedCloseTime] = useState(() => {
     const d = new Date();
-    d.setMinutes(d.getMinutes() + 45);
+    d.setHours(d.getHours() + 4); // 4 hours from now
     return d.toISOString().slice(0, 16);
   });
 
@@ -38,34 +38,6 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-
-  // Apply Presets
-  function applyPreset(type) {
-    const now = new Date();
-    const startStr = now.toISOString().slice(0, 16);
-
-    if (type === 'demo') {
-      const close = new Date(now.getTime() + 15 * 60 * 1000);
-      const forced = new Date(now.getTime() + 30 * 60 * 1000);
-      setTitle('Fast Demo: Singapore to Jebel Ali (2x 40ft)');
-      setBidStartTime(startStr);
-      setBidCloseTime(close.toISOString().slice(0, 16));
-      setForcedCloseTime(forced.toISOString().slice(0, 16));
-      setTriggerWindow('5');
-      setExtensionDuration('3');
-      setTriggerType('L1_RANK_CHANGE');
-    } else if (type === 'standard') {
-      const close = new Date(now.getTime() + 120 * 60 * 1000);
-      const forced = new Date(now.getTime() + 240 * 60 * 1000);
-      setTitle('Standard RFQ: Shanghai to Rotterdam (15x 40ft HC)');
-      setBidStartTime(startStr);
-      setBidCloseTime(close.toISOString().slice(0, 16));
-      setForcedCloseTime(forced.toISOString().slice(0, 16));
-      setTriggerWindow('10');
-      setExtensionDuration('5');
-      setTriggerType('ANY_RANK_CHANGE');
-    }
-  }
 
   // Live validation
   const startDate = new Date(bidStartTime);
@@ -141,30 +113,6 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Preset helper */}
-        <div className="mt-3.5 p-2.5 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-between text-xs">
-          <span className="font-medium text-gray-700 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            <span>Fill with preset:</span>
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => applyPreset('demo')}
-              className="px-2.5 py-1 rounded bg-white hover:bg-gray-100 text-blue-700 font-semibold border border-gray-200 shadow-2xs transition-colors"
-            >
-              Demo (15m close)
-            </button>
-            <button
-              type="button"
-              onClick={() => applyPreset('standard')}
-              className="px-2.5 py-1 rounded bg-white hover:bg-gray-100 text-gray-700 font-medium border border-gray-200 shadow-2xs transition-colors"
-            >
-              Standard (2h close)
-            </button>
-          </div>
         </div>
 
         {error && (

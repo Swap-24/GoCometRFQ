@@ -42,19 +42,6 @@ export const api = {
     }
     return res.json();
   },
-
-  async simulateBid(rfqId, simData) {
-    const res = await fetch(`${API_BASE}/rfqs/${rfqId}/simulate-bid`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(simData),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to simulate bid');
-    }
-    return res.json();
-  },
 };
 
 export function createRfqWebSocket(rfqId, onMessage, onError) {
@@ -70,7 +57,6 @@ export function createRfqWebSocket(rfqId, onMessage, onError) {
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      // Keep alive ping every 25s
       pingInterval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send('ping');
@@ -95,7 +81,6 @@ export function createRfqWebSocket(rfqId, onMessage, onError) {
     ws.onclose = () => {
       clearInterval(pingInterval);
       if (!isClosedManually) {
-        // Attempt reconnection after 3 seconds
         setTimeout(connect, 3000);
       }
     };

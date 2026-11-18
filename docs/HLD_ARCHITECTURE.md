@@ -19,7 +19,6 @@ flowchart TD
         UI_Room["Live Auction Room<br/>(L1-Ln Board, Charges Breakdown)"]
         UI_Modal["RFQ Creation Modal<br/>(X/Y Window Config, Validation)"]
         UI_Quote["Supplier Quote Console<br/>(Live Landed Price & Rank Preview)"]
-        UI_Sim["Evaluator Simulation Console<br/>(1-Click Testing at T-2m)"]
         WS_Client["WebSocket Client<br/>(Auto Reconnect, Room Subscription)"]
     end
 
@@ -46,7 +45,6 @@ flowchart TD
     UI_Room -->|HTTP GET /rfqs/:id| HTTP_Router
     UI_Modal -->|HTTP POST /rfqs| HTTP_Router
     UI_Quote -->|HTTP POST /rfqs/:id/quotes| HTTP_Router
-    UI_Sim -->|HTTP POST /rfqs/:id/simulate-bid| HTTP_Router
     WS_Client <-->|WSS /rfqs/:id/ws| WS_Broker
 
     HTTP_Router --> Engine

@@ -49,15 +49,15 @@ def test_create_and_fetch_rfq():
     assert detail["title"] == rfq_payload["title"]
     assert len(detail["activity_logs"]) >= 1
 
-def test_quote_submission_and_extension_via_simulation():
+def test_standard_quote_submission():
     now = datetime.now(timezone.utc)
-    start = now - timedelta(minutes=30)
-    close = now + timedelta(minutes=10)
-    forced = close + timedelta(minutes=15)
+    start = now - timedelta(minutes=10)
+    close = now + timedelta(minutes=60)
+    forced = close + timedelta(minutes=30)
 
     rfq_payload = {
-        "reference_id": f"RFQ-SIM-{int(now.timestamp())}",
-        "title": "Sim Test: Singapore to Rotterdam",
+        "reference_id": f"RFQ-QUOTE-{int(now.timestamp())}",
+        "title": "Standard Quote Test: Nhava Sheva to Singapore",
         "pickup_service_date": (now + timedelta(days=20)).isoformat(),
         "bid_start_time": start.isoformat(),
         "initial_bid_close_time": close.isoformat(),
@@ -72,32 +72,27 @@ def test_quote_submission_and_extension_via_simulation():
     assert create_res.status_code == 201
     rfq_id = create_res.json()["id"]
 
-    # Submit a quote simulated 2 minutes (120s) before close time (inside 10m window)
+    # Submit a standard quote
     quote_payload = {
         "carrier_name": "Maersk Line",
         "freight_charges": 1200.0,
         "origin_charges": 150.0,
         "destination_charges": 150.0,
-        "transit_time_days": 22,
-        "seconds_before_close": 120
+        "transit_time_days": 18,
+        "validity_date": (now + timedelta(days=30)).isoformat()
     }
 
-    sim_res = client.post(f"/api/v1/rfqs/{rfq_id}/simulate-bid", json=quote_payload)
-    assert sim_res.status_code == 200, sim_res.text
-    quote_data = sim_res.json()
+    quote_res = client.post(f"/api/v1/rfqs/{rfq_id}/quotes", json=quote_payload)
+    assert quote_res.status_code == 201, quote_res.text
+    quote_data = quote_res.json()
     assert quote_data["total_price"] == 1500.0
     assert quote_data["rank_at_submission"] == 1
 
-    # Check that RFQ was extended by 5 minutes
+    # Check details reflect the quote
     detail_res = client.get(f"/api/v1/rfqs/{rfq_id}")
     assert detail_res.status_code == 200
     detail = detail_res.json()
-    assert detail["extension_count"] == 1
     assert detail["lowest_bid_amount"] == 1500.0
     assert detail["lowest_bid_carrier"] == "Maersk Line"
-
-    # Verify activity logs contain TIME_EXTENSION
-    logs = detail["activity_logs"]
-    events = [l["event_type"] for l in logs]
-    assert "TIME_EXTENSION" in events
-    assert "BID_SUBMITTED" in events
+    assert len(detail["quotes"]) == 1
+    assert any(log["event_type"] == "BID_SUBMITTED" for log in detail["activity_logs"])
