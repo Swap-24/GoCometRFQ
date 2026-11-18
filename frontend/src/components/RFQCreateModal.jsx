@@ -68,6 +68,8 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
 
   const isCloseValid = closeDate > startDate;
   const isForcedValid = forcedDate > closeDate;
+  const auctionDurationMin = isCloseValid ? Math.round((closeDate - startDate) / 60000) : 0;
+  const isTriggerWindowExceeding = isBritishAuction && auctionDurationMin > 0 && parseInt(triggerWindow) >= auctionDurationMin;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -298,7 +300,13 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
                     onChange={(e) => setTriggerWindow(e.target.value)}
                     className="w-full px-2.5 py-1.5 rounded bg-white border border-gray-300 text-gray-900 text-xs font-mono focus:outline-none focus:border-blue-600"
                   />
-                  <span className="text-[10px] text-gray-500">Monitors last X mins</span>
+                  {isTriggerWindowExceeding ? (
+                    <span className="text-[10px] text-amber-600 font-medium block">
+                      Exceeds duration ({auctionDurationMin}m)
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-gray-500">Monitors last X mins</span>
+                  )}
                 </div>
 
                 <div>

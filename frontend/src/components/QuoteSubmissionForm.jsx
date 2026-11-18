@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Calculator, Zap, AlertCircle } from 'lucide-react';
+import { Send, Calculator, Zap, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const POPULAR_CARRIERS = ['Maersk Line', 'MSC', 'CMA CGM', 'Hapag-Lloyd', 'ONE', 'Evergreen'];
 
@@ -13,6 +13,7 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // Compute total
   const f = parseFloat(freightCharges) || 0;
@@ -52,7 +53,9 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
         notes: notes.trim() || undefined,
       });
 
+      setSuccessMessage(`Quote of $${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} submitted successfully for ${carrierName.trim()}!`);
       setNotes('');
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
       setError(err.message || 'Failed to submit quote');
     } finally {
@@ -104,6 +107,13 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
         <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{successMessage}</span>
         </div>
       )}
 

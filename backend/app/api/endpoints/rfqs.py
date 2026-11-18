@@ -9,6 +9,7 @@ from app.models.quote import Quote
 from app.models.activity_log import RFQActivityLog
 from app.models.enums import AuctionStatus, ActivityEventType
 from app.schemas.rfq import RFQCreate, RFQListItem, RFQDetail
+from app.schemas.quote import QuoteResponse
 from app.services.ranking_service import RankingService
 
 router = APIRouter()
@@ -37,20 +38,23 @@ def sync_rfq_status(rfq: RFQ, db: Session, now: datetime | None = None) -> Aucti
 
 @router.post("/", response_model=RFQDetail, status_code=status.HTTP_201_CREATED)
 def create_rfq(rfq_in: RFQCreate, db: Session = Depends(get_db)):
+    ref_id = rfq_in.reference_id.strip()
+    title = rfq_in.title.strip()
+
     # Check if reference_id is already in use
-    existing = db.query(RFQ).filter(RFQ.reference_id == rfq_in.reference_id).first()
+    existing = db.query(RFQ).filter(RFQ.reference_id == ref_id).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"An RFQ with Reference ID '{rfq_in.reference_id}' already exists."
+            detail=f"An RFQ with Reference ID '{ref_id}' already exists."
         )
 
     now = datetime.now(timezone.utc)
     
     rfq = RFQ(
-        reference_id=rfq_in.reference_id,
-        title=rfq_in.title,
-        description=rfq_in.description,
+        reference_id=ref_id,
+        title=title,
+        description=rfq_in.description.strip() if rfq_in.description else None,
         pickup_service_date=rfq_in.pickup_service_date,
         bid_start_time=rfq_in.bid_start_time,
         initial_bid_close_time=rfq_in.initial_bid_close_time,
@@ -94,8 +98,9 @@ def list_rfqs(
     query = db.query(RFQ)
 
     if search:
+        search_term = f"%{search.strip()}%"
         query = query.filter(
-            (RFQ.reference_id.ilike(f"%{search}%")) | (RFQ.title.ilike(f"%{search}%"))
+            (RFQ.reference_id.ilike(search_term)) | (RFQ.title.ilike(search_term))
         )
 
     rfqs = query.order_by(desc(RFQ.created_at)).all()
@@ -180,7 +185,7 @@ def get_rfq_detail(rfq_id: str, db: Session = Depends(get_db)):
         }
         formatted_quotes.append(q_dict)
 
-    # Sort formatted quotes: best quote first
+    # Sort formatted quotes: lowest price first
     formatted_quotes.sort(key=lambda x: (x["total_price"], x["submitted_at"]))
 
     return RFQDetail(
@@ -207,3 +212,32 @@ def get_rfq_detail(rfq_id: str, db: Session = Depends(get_db)):
         quotes=formatted_quotes,
         activity_logs=rfq.activity_logs
     )
+
+@router.get("/{rfq_id}/quotes", response_model=list[QuoteResponse])
+def get_rfq_quotes(rfq_id: str, db: Session = Depends(get_db)):
+    """Retrieve all quotes submitted for an RFQ, sorted by price ascending."""
+    rfq = db.query(RFQ).filter(RFQ.id == rfq_id).first()
+    if not rfq:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="RFQ not found")
+
+    best_quotes = RankingService.get_supplier_best_quotes(rfq.quotes)
+    carrier_rank_map = {item["carrier_name"]: item["rank"] for item in best_quotes}
+
+    results = []
+    for q in sorted(rfq.quotes, key=lambda x: (x.total_price, x.submitted_at)):
+        results.append(QuoteResponse(
+            id=q.id,
+            rfq_id=q.rfq_id,
+            carrier_name=q.carrier_name,
+            freight_charges=q.freight_charges,
+            origin_charges=q.origin_charges,
+            destination_charges=q.destination_charges,
+            total_price=q.total_price,
+            transit_time_days=q.transit_time_days,
+            validity_date=q.validity_date,
+            notes=q.notes,
+            rank_at_submission=q.rank_at_submission,
+            current_rank=carrier_rank_map.get(q.carrier_name),
+            submitted_at=q.submitted_at
+        ))
+    return results
