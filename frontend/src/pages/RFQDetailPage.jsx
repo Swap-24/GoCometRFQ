@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ShieldAlert, Zap, RefreshCw, Info, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Zap, RefreshCw, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
 import CountdownTimer from '../components/CountdownTimer';
@@ -13,6 +14,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastExtensionAlert, setLastExtensionAlert] = useState(null);
+  const [actionSuccess, setActionSuccess] = useState(null);
 
   // Load RFQ Data
   async function loadData() {
@@ -59,6 +61,8 @@ export default function RFQDetailPage({ rfqId, onBack }) {
 
   async function handleQuoteSubmit(quoteData) {
     const res = await api.submitQuote(rfqId, quoteData);
+    setActionSuccess(`Quote of $${res.total_price.toLocaleString(undefined, { minimumFractionDigits: 2 })} submitted successfully by ${res.carrier_name}.`);
+    setTimeout(() => setActionSuccess(null), 5000);
     await loadData();
     return res;
   }
@@ -66,7 +70,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
   if (isLoading) {
     return (
       <div className="p-16 text-center rounded-xl bg-white border border-gray-200">
-        <div className="w-6 h-6 mx-auto border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin mb-2" />
+        <div className="w-6 h-6 mx-auto border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin mb-2" />
         <p className="text-xs text-gray-500 font-medium">Loading auction details...</p>
       </div>
     );
@@ -80,7 +84,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
         <p className="text-xs text-red-700 mb-3">{error || 'RFQ not found'}</p>
         <button
           onClick={onBack}
-          className="px-3.5 py-1.5 rounded-lg bg-gray-900 text-white text-xs hover:bg-gray-800"
+          className="px-3.5 py-1.5 rounded-lg bg-gray-900 text-white text-xs hover:bg-gray-800 transition-colors"
         >
           Return to Auctions
         </button>
@@ -93,7 +97,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
   return (
     <div className="space-y-5">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200/90">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -126,7 +130,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
               )}
             </div>
 
-            <h1 className="text-xl font-bold text-gray-900 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-950 mt-1">
               {rfq.title}
             </h1>
             {rfq.description && (
@@ -144,21 +148,43 @@ export default function RFQDetailPage({ rfqId, onBack }) {
         </button>
       </div>
 
+      {/* Success Banner */}
+      <AnimatePresence>
+        {actionSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="p-3 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs flex items-center gap-2 shadow-2xs font-medium"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{actionSuccess}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Extension Alert Banner */}
-      {lastExtensionAlert && (
-        <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-2.5">
-            <Zap className="w-4 h-4 text-amber-600 shrink-0 fill-amber-600" />
-            <div className="text-xs">
-              <span className="font-bold">British Auction Auto-Extended: </span>
-              <span>{lastExtensionAlert.reason}</span>
+      <AnimatePresence>
+        {lastExtensionAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="p-3.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between gap-3 shadow-2xs"
+          >
+            <div className="flex items-center gap-2.5">
+              <Zap className="w-4 h-4 text-amber-600 shrink-0 fill-amber-600" />
+              <div className="text-xs">
+                <span className="font-bold">British Auction Auto-Extended: </span>
+                <span>{lastExtensionAlert.reason}</span>
+              </div>
             </div>
-          </div>
-          <span className="text-xs font-mono font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-300 shrink-0">
-            +{rfq.extension_duration_minutes}m
-          </span>
-        </div>
-      )}
+            <span className="text-xs font-mono font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-300 shrink-0">
+              +{rfq.extension_duration_minutes}m
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Countdown Timer */}
       <CountdownTimer
@@ -172,31 +198,31 @@ export default function RFQDetailPage({ rfqId, onBack }) {
 
       {/* Configuration Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+        <div className="p-3.5 rounded-lg bg-white border border-gray-200/90 shadow-subtle">
           <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
             Trigger Window (X)
           </span>
-          <span className="text-sm font-bold font-mono text-gray-900">
+          <span className="text-sm font-extrabold font-mono text-gray-950">
             Last {rfq.trigger_window_minutes} Minutes
           </span>
           <p className="text-[11px] text-gray-500 mt-0.5">Monitors activity before close</p>
         </div>
 
-        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+        <div className="p-3.5 rounded-lg bg-white border border-gray-200/90 shadow-subtle">
           <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
             Extension Added (Y)
           </span>
-          <span className="text-sm font-bold font-mono text-gray-900">
+          <span className="text-sm font-extrabold font-mono text-gray-950">
             +{rfq.extension_duration_minutes} Minutes
           </span>
           <p className="text-[11px] text-gray-500 mt-0.5">Added per qualifying trigger</p>
         </div>
 
-        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+        <div className="p-3.5 rounded-lg bg-white border border-gray-200/90 shadow-subtle">
           <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
             Trigger Mode
           </span>
-          <span className="text-xs font-bold text-gray-900 font-mono block truncate">
+          <span className="text-xs font-bold text-gray-950 font-mono block truncate">
             {rfq.extension_trigger_type}
           </span>
           <p className="text-[11px] text-gray-500 mt-0.5">
@@ -204,7 +230,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
           </p>
         </div>
 
-        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+        <div className="p-3.5 rounded-lg bg-white border border-gray-200/90 shadow-subtle">
           <span className="text-[10px] uppercase font-bold text-red-600 tracking-wider block">
             Forced Close Cap
           </span>
@@ -232,7 +258,7 @@ export default function RFQDetailPage({ rfqId, onBack }) {
           />
 
           {/* Rules Card */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 text-xs space-y-2.5 shadow-2xs">
+          <div className="rounded-xl border border-gray-200/90 bg-white p-4 text-xs space-y-2.5 shadow-subtle">
             <h4 className="font-bold text-gray-900 flex items-center gap-1.5">
               <Info className="w-4 h-4 text-blue-600" />
               <span>British Reverse Auction Principles</span>

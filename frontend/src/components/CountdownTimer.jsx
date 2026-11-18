@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Zap, ShieldAlert, AlertCircle } from 'lucide-react';
+import { Clock, Zap, ShieldAlert, AlertCircle, PlayCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CountdownTimer({ 
   currentCloseTime, 
@@ -11,6 +12,7 @@ export default function CountdownTimer({
   compact = false 
 }) {
   const [timeLeft, setTimeLeft] = useState({ totalSeconds: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [startsIn, setStartsIn] = useState({ totalSeconds: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isInTriggerWindow, setIsInTriggerWindow] = useState(false);
   const [isPastForcedClose, setIsPastForcedClose] = useState(false);
 
@@ -19,9 +21,24 @@ export default function CountdownTimer({
       const now = new Date().getTime();
       const close = new Date(currentCloseTime).getTime();
       const forced = new Date(forcedCloseTime).getTime();
+      const start = new Date(startTime).getTime();
 
       const diff = close - now;
+      const startDiff = start - now;
       const forcedDiff = forced - now;
+
+      // Handle upcoming
+      if (startDiff > 0) {
+        const totalStartSec = Math.floor(startDiff / 1000);
+        setStartsIn({
+          totalSeconds: totalStartSec,
+          hours: Math.floor(totalStartSec / 3600),
+          minutes: Math.floor((totalStartSec % 3600) / 60),
+          seconds: totalStartSec % 60,
+        });
+      } else {
+        setStartsIn({ totalSeconds: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
 
       if (forcedDiff <= 0) {
         setIsPastForcedClose(true);
@@ -55,6 +72,14 @@ export default function CountdownTimer({
 
   // Compact badge for listing cards
   if (compact) {
+    if (status === 'UPCOMING' && startsIn.totalSeconds > 0) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 text-amber-800 text-xs font-mono font-medium border border-amber-200">
+          <PlayCircle className="w-3.5 h-3.5 text-amber-600" />
+          <span>Opens in {pad(startsIn.hours)}:{pad(startsIn.minutes)}:{pad(startsIn.seconds)}</span>
+        </span>
+      );
+    }
     if (status === 'CLOSED' || status === 'FORCE_CLOSED' || timeLeft.totalSeconds <= 0) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-gray-100 text-gray-600 text-xs font-mono font-medium border border-gray-200">
@@ -64,13 +89,13 @@ export default function CountdownTimer({
       );
     }
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-semibold border ${
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-semibold transition-all ${
         isInTriggerWindow 
-          ? 'bg-amber-50 text-amber-800 border-amber-300'
-          : 'bg-gray-50 text-gray-800 border-gray-200'
+          ? 'bg-amber-100 text-amber-900 border border-amber-300 ring-2 ring-amber-200/50'
+          : 'bg-gray-100 text-gray-900 border border-gray-200'
       }`}>
         {isInTriggerWindow ? (
-          <Zap className="w-3.5 h-3.5 text-amber-600" />
+          <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600 animate-pulse" />
         ) : (
           <Clock className="w-3.5 h-3.5 text-gray-500" />
         )}
@@ -80,16 +105,16 @@ export default function CountdownTimer({
   }
 
   // Full Auction Detail Countdown Display
-  const isAuctionClosed = status === 'CLOSED' || status === 'FORCE_CLOSED' || timeLeft.totalSeconds <= 0;
+  const isAuctionClosed = status === 'CLOSED' || status === 'FORCE_CLOSED' || (status === 'ACTIVE' && timeLeft.totalSeconds <= 0);
 
   return (
-    <div className={`rounded-xl border p-5 transition-colors ${
+    <div className={`rounded-xl border p-5 transition-all shadow-subtle ${
       status === 'FORCE_CLOSED' || isPastForcedClose
-        ? 'bg-red-50/50 border-red-200'
+        ? 'bg-red-50/60 border-red-200'
         : isAuctionClosed
-        ? 'bg-gray-50 border-gray-200'
+        ? 'bg-gray-50/80 border-gray-200'
         : isInTriggerWindow
-        ? 'bg-amber-50/60 border-amber-300'
+        ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-200/50'
         : 'bg-white border-gray-200'
     }`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -97,17 +122,45 @@ export default function CountdownTimer({
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              {status === 'ACTIVE' && timeLeft.totalSeconds > 0 ? 'Time Remaining' : 'Auction Status'}
+              {status === 'UPCOMING' && startsIn.totalSeconds > 0
+                ? 'Auction Starts In'
+                : status === 'ACTIVE' && timeLeft.totalSeconds > 0
+                ? 'Time Remaining'
+                : 'Auction Concluded'}
             </span>
-            {isInTriggerWindow && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
-                <Zap className="w-3 h-3 text-amber-600" />
-                <span>Trigger Window Active ({triggerWindowMinutes}m)</span>
-              </span>
-            )}
+            <AnimatePresence>
+              {isInTriggerWindow && (
+                <motion.span 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-amber-200/80 text-amber-900 border border-amber-300 shadow-2xs"
+                >
+                  <Zap className="w-3 h-3 text-amber-700 fill-amber-700 animate-bounce" />
+                  <span>Extension Trigger Window Active ({triggerWindowMinutes}m)</span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
 
-          {status === 'ACTIVE' && timeLeft.totalSeconds > 0 ? (
+          {status === 'UPCOMING' && startsIn.totalSeconds > 0 ? (
+            <div className="flex items-baseline gap-1.5 font-mono text-amber-800">
+              <span className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
+                {pad(startsIn.hours)}
+              </span>
+              <span className="text-xs text-gray-400 font-sans mr-2">h</span>
+              <span className="text-2xl font-light text-gray-300">:</span>
+              <span className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
+                {pad(startsIn.minutes)}
+              </span>
+              <span className="text-xs text-gray-400 font-sans mr-2">m</span>
+              <span className="text-2xl font-light text-gray-300">:</span>
+              <span className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
+                {pad(startsIn.seconds)}
+              </span>
+              <span className="text-xs text-gray-400 font-sans">s</span>
+            </div>
+          ) : status === 'ACTIVE' && timeLeft.totalSeconds > 0 ? (
             <div className="flex items-baseline gap-1.5 font-mono">
               <span className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 tabular-nums">
                 {pad(timeLeft.hours)}
@@ -123,7 +176,7 @@ export default function CountdownTimer({
 
               <span className="text-2xl font-light text-gray-300">:</span>
 
-              <span className={`text-3xl sm:text-4xl font-bold tracking-tight tabular-nums ${
+              <span className={`text-3xl sm:text-4xl font-bold tracking-tight tabular-nums transition-colors ${
                 isInTriggerWindow ? 'text-amber-700' : 'text-blue-600'
               }`}>
                 {pad(timeLeft.seconds)}
@@ -154,12 +207,16 @@ export default function CountdownTimer({
       </div>
 
       {isInTriggerWindow && (
-        <div className="mt-3.5 pt-3 border-t border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+        <motion.div 
+          initial={{ opacity: 0, y: 3 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3.5 pt-3 border-t border-amber-200/80 text-xs text-amber-950 flex items-center gap-2"
+        >
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
           <span>
-            Qualifying bids submitted now will extend the auction by <strong>{extensionDurationMinutes} minutes</strong> (up to the Forced Close limit).
+            Bids placed inside this {triggerWindowMinutes}-minute window will automatically extend the auction by <strong>+{extensionDurationMinutes} minutes</strong> (clamped at Forced Close ceiling).
           </span>
-        </div>
+        </motion.div>
       )}
     </div>
   );
