@@ -1,44 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Clock, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 
+// Helper to format Date as local YYYY-MM-DDTHH:mm for datetime-local input
+function formatLocalDateTime(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
-  const [referenceId, setReferenceId] = useState(`RFQ-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [referenceId, setReferenceId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   
-  // Dates
-  const [pickupDate, setPickupDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 14);
-    return d.toISOString().slice(0, 16);
-  });
-
-  const [bidStartTime, setBidStartTime] = useState(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 16);
-  });
-
-  const [bidCloseTime, setBidCloseTime] = useState(() => {
-    const d = new Date();
-    d.setHours(d.getHours() + 2); // 2 hours from now
-    return d.toISOString().slice(0, 16);
-  });
-
-  const [forcedCloseTime, setForcedCloseTime] = useState(() => {
-    const d = new Date();
-    d.setHours(d.getHours() + 4); // 4 hours from now
-    return d.toISOString().slice(0, 16);
-  });
+  // Date states in local time
+  const [pickupDate, setPickupDate] = useState('');
+  const [bidStartTime, setBidStartTime] = useState('');
+  const [bidCloseTime, setBidCloseTime] = useState('');
+  const [forcedCloseTime, setForcedCloseTime] = useState('');
 
   // British Auction configurations
   const [isBritishAuction, setIsBritishAuction] = useState(true);
-  const [triggerWindow, setTriggerWindow] = useState('10');
-  const [extensionDuration, setExtensionDuration] = useState('5');
+  const [triggerWindow, setTriggerWindow] = useState('5');
+  const [extensionDuration, setExtensionDuration] = useState('3');
   const [triggerType, setTriggerType] = useState('L1_RANK_CHANGE');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Reset and auto-select current local date and time whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const now = new Date();
+      
+      // Start time: right now
+      const start = new Date(now.getTime());
+      
+      // Close time: 15 minutes from now
+      const close = new Date(now.getTime() + 15 * 60 * 1000);
+      
+      // Forced close: 30 minutes from now
+      const forced = new Date(now.getTime() + 30 * 60 * 1000);
+      
+      // Pickup date: 14 days from now
+      const pickup = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      setReferenceId(`RFQ-${Math.floor(1000 + Math.random() * 9000)}`);
+      setTitle('');
+      setDescription('');
+      setBidStartTime(formatLocalDateTime(start));
+      setBidCloseTime(formatLocalDateTime(close));
+      setForcedCloseTime(formatLocalDateTime(forced));
+      setPickupDate(formatLocalDateTime(pickup));
+      setError(null);
+    }
+  }, [isOpen]);
 
   // Live validation
   const startDate = new Date(bidStartTime);
@@ -72,8 +93,8 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
         initial_bid_close_time: new Date(bidCloseTime).toISOString(),
         forced_bid_close_time: new Date(forcedCloseTime).toISOString(),
         is_british_auction: isBritishAuction,
-        trigger_window_minutes: parseInt(triggerWindow) || 10,
-        extension_duration_minutes: parseInt(extensionDuration) || 5,
+        trigger_window_minutes: parseInt(triggerWindow) || 5,
+        extension_duration_minutes: parseInt(extensionDuration) || 3,
         extension_trigger_type: triggerType,
       };
 
@@ -188,7 +209,7 @@ export default function RFQCreateModal({ isOpen, onClose, onCreated }) {
           <div className="p-3.5 rounded-lg bg-gray-50 border border-gray-200 space-y-2.5">
             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-blue-600" />
-              <span>Auction Deadlines</span>
+              <span>Auction Deadlines (Local Time)</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
