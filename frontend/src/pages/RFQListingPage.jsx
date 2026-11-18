@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
-import { Search, Ship, Award, ShieldAlert, Zap, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Ship, Award, ShieldAlert, Zap, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CountdownTimer from '../components/CountdownTimer';
 
 export default function RFQListingPage({ rfqs = [], isLoading, onSelectRfq, onOpenCreateModal }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   // Filtered RFQs
   const filteredRfqs = rfqs.filter((r) => {
@@ -17,11 +21,30 @@ export default function RFQListingPage({ rfqs = [], isLoading, onSelectRfq, onOp
     return matchesStatus && matchesSearch;
   });
 
+  // Reset to page 1 whenever search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm, pageSize]);
+
+  // Pagination calculations
+  const totalItems = filteredRfqs.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const paginatedRfqs = filteredRfqs.slice(startIndex, endIndex);
+
   // Calculate Metrics
   const totalCount = rfqs.length;
   const activeCount = rfqs.filter((r) => r.status === 'ACTIVE').length;
   const extendedCount = rfqs.filter((r) => r.extension_count > 0).length;
   const totalBids = rfqs.reduce((acc, r) => acc + (r.total_bids_count || 0), 0);
+
+  function handlePageChange(newPage) {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 180, behavior: 'smooth' });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -154,114 +177,192 @@ export default function RFQListingPage({ rfqs = [], isLoading, onSelectRfq, onOp
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
-          <AnimatePresence>
-            {filteredRfqs.map((rfq, index) => {
-              const hasExtensions = rfq.extension_count > 0;
+        <div className="space-y-4">
+          {/* List items */}
+          <div className="grid grid-cols-1 gap-3">
+            <AnimatePresence mode="wait">
+              {paginatedRfqs.map((rfq, index) => {
+                const hasExtensions = rfq.extension_count > 0;
 
-              return (
-                <motion.div
-                  key={rfq.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15, delay: index * 0.02 }}
-                  onClick={() => onSelectRfq(rfq.id)}
-                  className="p-4 sm:p-5 rounded-xl bg-white border border-gray-200/90 hover:border-gray-300 hover:-translate-y-0.5 hover:shadow-card-hover transition-all cursor-pointer group"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    {/* Left: Info */}
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-800 border border-gray-200">
-                          {rfq.reference_id}
-                        </span>
-
-                        {/* Status Badge */}
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${
-                          rfq.status === 'ACTIVE'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : rfq.status === 'FORCE_CLOSED'
-                            ? 'bg-red-50 text-red-800 border-red-300'
-                            : rfq.status === 'CLOSED'
-                            ? 'bg-gray-100 text-gray-700 border-gray-300'
-                            : 'bg-amber-50 text-amber-800 border-amber-300'
-                        }`}>
-                          {rfq.status.replace('_', ' ')}
-                        </span>
-
-                        {/* Extension Counter */}
-                        {hasExtensions && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 font-mono">
-                            <Zap className="w-3 h-3 text-amber-600 fill-amber-600" />
-                            <span>+{rfq.extension_count * rfq.extension_duration_minutes}m ({rfq.extension_count}x extended)</span>
+                return (
+                  <motion.div
+                    key={rfq.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, delay: index * 0.02 }}
+                    onClick={() => onSelectRfq(rfq.id)}
+                    className="p-4 sm:p-5 rounded-xl bg-white border border-gray-200/90 hover:border-gray-300 hover:-translate-y-0.5 hover:shadow-card-hover transition-all cursor-pointer group"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      {/* Left: Info */}
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-800 border border-gray-200">
+                            {rfq.reference_id}
                           </span>
-                        )}
 
-                        <span className="text-[11px] text-gray-500 font-mono">
-                          Rule: {rfq.extension_trigger_type} (X={rfq.trigger_window_minutes}m, Y={rfq.extension_duration_minutes}m)
-                        </span>
-                      </div>
+                          {/* Status Badge */}
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${
+                            rfq.status === 'ACTIVE'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : rfq.status === 'FORCE_CLOSED'
+                              ? 'bg-red-50 text-red-800 border-red-300'
+                              : rfq.status === 'CLOSED'
+                              ? 'bg-gray-100 text-gray-700 border-gray-300'
+                              : 'bg-amber-50 text-amber-800 border-amber-300'
+                          }`}>
+                            {rfq.status.replace('_', ' ')}
+                          </span>
 
-                      <h3 className="text-base font-bold text-gray-950 group-hover:text-blue-600 transition-colors">
-                        {rfq.title}
-                      </h3>
-
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                        <span>Pickup: <strong className="text-gray-700">{new Date(rfq.pickup_service_date).toLocaleDateString()}</strong></span>
-                        <span>•</span>
-                        <span>Total Quotes: <strong className="text-gray-900 font-mono">{rfq.total_bids_count}</strong></span>
-                      </div>
-                    </div>
-
-                    {/* Middle: Lowest Bid */}
-                    <div className="px-3.5 py-2.5 rounded-lg bg-gray-50/80 border border-gray-200 flex items-center gap-3 self-start lg:self-auto">
-                      <div className="w-7 h-7 rounded bg-white border border-gray-200 flex items-center justify-center text-emerald-600 shadow-2xs">
-                        <Award className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
-                          Current Lowest (L1)
-                        </span>
-                        {rfq.lowest_bid_amount !== null ? (
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-sm font-bold font-mono text-emerald-700">
-                              ${rfq.lowest_bid_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {/* Extension Counter */}
+                          {hasExtensions && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 font-mono">
+                              <Zap className="w-3 h-3 text-amber-600 fill-amber-600" />
+                              <span>+{rfq.extension_count * rfq.extension_duration_minutes}m ({rfq.extension_count}x extended)</span>
                             </span>
-                            <span className="text-xs text-gray-500 font-medium">by {rfq.lowest_bid_carrier}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">No quotes submitted</span>
-                        )}
-                      </div>
-                    </div>
+                          )}
 
-                    {/* Right: Countdown */}
-                    <div className="flex items-center gap-3 justify-between lg:justify-end">
-                      <div className="text-left lg:text-right">
-                        <CountdownTimer
-                          compact={true}
-                          currentCloseTime={rfq.current_bid_close_time}
-                          forcedCloseTime={rfq.forced_bid_close_time}
-                          startTime={rfq.bid_start_time}
-                          triggerWindowMinutes={rfq.trigger_window_minutes}
-                          extensionDurationMinutes={rfq.extension_duration_minutes}
-                          status={rfq.status}
-                        />
-                        <div className="text-[11px] text-gray-500 mt-1 flex items-center lg:justify-end gap-1 font-mono">
-                          <ShieldAlert className="w-3 h-3 text-red-500" />
-                          <span>Cap: {new Date(rfq.forced_bid_close_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[11px] text-gray-500 font-mono">
+                            Rule: {rfq.extension_trigger_type} (X={rfq.trigger_window_minutes}m, Y={rfq.extension_duration_minutes}m)
+                          </span>
+                        </div>
+
+                        <h3 className="text-base font-bold text-gray-950 group-hover:text-blue-600 transition-colors">
+                          {rfq.title}
+                        </h3>
+
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                          <span>Pickup: <strong className="text-gray-700">{new Date(rfq.pickup_service_date).toLocaleDateString()}</strong></span>
+                          <span>•</span>
+                          <span>Total Quotes: <strong className="text-gray-900 font-mono">{rfq.total_bids_count}</strong></span>
                         </div>
                       </div>
 
-                      <div className="p-1.5 rounded-md text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all">
-                        <ArrowRight className="w-4 h-4" />
+                      {/* Middle: Lowest Bid */}
+                      <div className="px-3.5 py-2.5 rounded-lg bg-gray-50/80 border border-gray-200 flex items-center gap-3 self-start lg:self-auto">
+                        <div className="w-7 h-7 rounded bg-white border border-gray-200 flex items-center justify-center text-emerald-600 shadow-2xs">
+                          <Award className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
+                            Current Lowest (L1)
+                          </span>
+                          {rfq.lowest_bid_amount !== null ? (
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-sm font-bold font-mono text-emerald-700">
+                                ${rfq.lowest_bid_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <span className="text-xs text-gray-500 font-medium">by {rfq.lowest_bid_carrier}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">No quotes submitted</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Countdown */}
+                      <div className="flex items-center gap-3 justify-between lg:justify-end">
+                        <div className="text-left lg:text-right">
+                          <CountdownTimer
+                            compact={true}
+                            currentCloseTime={rfq.current_bid_close_time}
+                            forcedCloseTime={rfq.forced_bid_close_time}
+                            startTime={rfq.bid_start_time}
+                            triggerWindowMinutes={rfq.trigger_window_minutes}
+                            extensionDurationMinutes={rfq.extension_duration_minutes}
+                            status={rfq.status}
+                          />
+                          <div className="text-[11px] text-gray-500 mt-1 flex items-center lg:justify-end gap-1 font-mono">
+                            <ShieldAlert className="w-3 h-3 text-red-500" />
+                            <span>Cap: {new Date(rfq.forced_bid_close_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+
+                        <div className="p-1.5 rounded-md text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all">
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalItems > 0 && (
+            <div className="p-3.5 rounded-xl bg-white border border-gray-200/90 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+              {/* Summary */}
+              <div className="flex items-center gap-2">
+                <span>
+                  Showing <strong className="text-gray-900 font-mono">{startIndex + 1}</strong> to <strong className="text-gray-900 font-mono">{endIndex}</strong> of <strong className="text-gray-900 font-mono">{totalItems}</strong> auctions
+                </span>
+                <span className="text-gray-300">|</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500">Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="px-2 py-0.5 rounded border border-gray-300 bg-white text-gray-900 font-semibold focus:outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Page Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show current, first, last, and immediate neighbors
+                  const isVisible = page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+                  if (!isVisible) {
+                    if (page === 2 || page === totalPages - 1) {
+                      return <span key={page} className="px-1 text-gray-400">...</span>;
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => handlePageChange(page)}
+                      className={`min-w-8 h-8 rounded-md font-mono text-xs font-semibold transition-colors ${
+                        currentPage === page
+                          ? 'bg-gray-950 text-white shadow-xs'
+                          : 'border border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
