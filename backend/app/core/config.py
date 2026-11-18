@@ -12,6 +12,14 @@ elif (BACKEND_DIR / ".env").exists():
 else:
     load_dotenv(override=True)
 
+# Load .env from project root or backend dir
+if (ROOT_DIR / ".env").exists():
+    load_dotenv(ROOT_DIR / ".env", override=True)
+elif (BACKEND_DIR / ".env").exists():
+    load_dotenv(BACKEND_DIR / ".env", override=True)
+else:
+    load_dotenv(override=True)
+
 class Settings:
     PROJECT_NAME: str = "GoComet British Reverse Auction RFQ System"
     VERSION: str = "1.0.0"
