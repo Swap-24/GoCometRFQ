@@ -59,6 +59,7 @@ erDiagram
 
 ## 2. Table Specifications
 
+
 ### Table: `rfqs`
 Stores the RFQ specifications, timing windows, British auction configurations, and status.
 
