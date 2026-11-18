@@ -1,122 +1,91 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import Navbar from './components/Navbar';
+import RFQListingPage from './pages/RFQListingPage';
+import RFQDetailPage from './pages/RFQDetailPage';
+import RFQCreateModal from './components/RFQCreateModal';
+import { api } from './services/api';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [currentView, setCurrentView] = useState('listing'); // 'listing' | 'detail'
+  const [selectedRfqId, setSelectedRfqId] = useState(null);
+  const [rfqs, setRfqs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Fetch RFQs list
+  async function fetchRfqs() {
+    try {
+      setIsLoading(true);
+      const data = await api.getRfqs();
+      setRfqs(data);
+    } catch (err) {
+      console.error('Failed to fetch RFQs:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchRfqs();
+  }, []);
+
+  function handleSelectRfq(id) {
+    setSelectedRfqId(id);
+    setCurrentView('detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleNavigateHome() {
+    setCurrentView('listing');
+    setSelectedRfqId(null);
+    fetchRfqs();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function handleCreated(newRfq) {
+    await fetchRfqs();
+    if (newRfq?.id) {
+      handleSelectRfq(newRfq.id);
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+      {/* Navbar */}
+      <Navbar
+        currentView={currentView}
+        onNavigateHome={handleNavigateHome}
+        onOpenCreateModal={() => setIsCreateModalOpen(true)}
+      />
 
-      <div className="ticks"></div>
+      {/* Main Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {currentView === 'listing' ? (
+          <RFQListingPage
+            rfqs={rfqs}
+            isLoading={isLoading}
+            onSelectRfq={handleSelectRfq}
+            onOpenCreateModal={() => setIsCreateModalOpen(true)}
+          />
+        ) : (
+          <RFQDetailPage
+            rfqId={selectedRfqId}
+            onBack={handleNavigateHome}
+          />
+        )}
+      </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* RFQ Creation Modal */}
+      <RFQCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={handleCreated}
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Footer */}
+      <footer className="border-t border-slate-900 bg-slate-950/60 py-6 mt-12 text-center text-xs text-slate-500">
+        <p>GoComet British Reverse Auction RFQ Platform • Built with FastAPI, PostgreSQL & React</p>
+      </footer>
+    </div>
+  );
 }
-
-export default App
