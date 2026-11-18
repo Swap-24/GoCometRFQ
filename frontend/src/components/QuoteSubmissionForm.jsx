@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Calculator, Zap, AlertCircle, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Send, Calculator, Zap, AlertCircle } from 'lucide-react';
 
 const POPULAR_CARRIERS = ['Maersk Line', 'MSC', 'CMA CGM', 'Hapag-Lloyd', 'ONE', 'Evergreen'];
 
@@ -53,7 +52,6 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
         notes: notes.trim() || undefined,
       });
 
-      // Clear or partially reset form for rapid continuous bidding
       setNotes('');
     } catch (err) {
       setError(err.message || 'Failed to submit quote');
@@ -78,15 +76,15 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 sm:p-6 backdrop-blur-sm shadow-xl">
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
         <div>
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-sky-400" />
-            <span>Supplier Quote Submission</span>
+          <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+            <Calculator className="w-4 h-4 text-blue-600" />
+            <span>Submit Supplier Quote</span>
           </h3>
-          <p className="text-xs text-slate-400">
-            Submit a competitive quotation to underbid competitors
+          <p className="text-xs text-gray-500">
+            Enter line-item charges for this RFQ
           </p>
         </div>
 
@@ -94,25 +92,25 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
           <button
             type="button"
             onClick={applyUnderbid}
-            className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all flex items-center gap-1"
+            className="text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors flex items-center gap-1"
           >
-            <Zap className="w-3.5 h-3.5" />
-            <span>Auto Underbid L1</span>
+            <Zap className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Underbid L1</span>
           </button>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-xl bg-rose-950/40 border border-rose-800/50 text-rose-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         {/* Carrier name */}
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Carrier / Supplier Company
           </label>
           <input
@@ -121,19 +119,19 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
             value={carrierName}
             onChange={(e) => setCarrierName(e.target.value)}
             placeholder="e.g. Maersk Line, MSC, CMA CGM"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 text-xs focus:outline-none focus:border-sky-500 transition-colors font-medium"
+            className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
           />
           {/* Quick Carrier Pills */}
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
             {POPULAR_CARRIERS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCarrierName(c)}
-                className={`text-[11px] px-2 py-0.5 rounded-md transition-colors ${
+                className={`text-[11px] px-2 py-0.5 rounded transition-colors ${
                   carrierName === c
-                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border border-slate-700/50'
+                    ? 'bg-blue-100 text-blue-800 border border-blue-300 font-semibold'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
                 }`}
               >
                 {c}
@@ -143,10 +141,10 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
         </div>
 
         {/* Charge breakdown */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2.5">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
-              Freight Rate ($)
+            <label className="block text-[11px] font-medium text-gray-600 mb-1">
+              Freight ($)
             </label>
             <input
               type="number"
@@ -155,13 +153,13 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
               required
               value={freightCharges}
               onChange={(e) => setFreightCharges(e.target.value)}
-              placeholder="e.g. 1200"
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 text-xs font-mono focus:outline-none focus:border-sky-500"
+              placeholder="1200"
+              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
-              Origin Charges ($)
+            <label className="block text-[11px] font-medium text-gray-600 mb-1">
+              Origin ($)
             </label>
             <input
               type="number"
@@ -169,13 +167,13 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
               min="0"
               value={originCharges}
               onChange={(e) => setOriginCharges(e.target.value)}
-              placeholder="e.g. 150"
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 text-xs font-mono focus:outline-none focus:border-sky-500"
+              placeholder="150"
+              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
-              Dest. Charges ($)
+            <label className="block text-[11px] font-medium text-gray-600 mb-1">
+              Dest ($)
             </label>
             <input
               type="number"
@@ -183,16 +181,16 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
               min="0"
               value={destinationCharges}
               onChange={(e) => setDestinationCharges(e.target.value)}
-              placeholder="e.g. 150"
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 text-xs font-mono focus:outline-none focus:border-sky-500"
+              placeholder="150"
+              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
             />
           </div>
         </div>
 
         {/* Transit & Validity */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
+            <label className="block text-[11px] font-medium text-gray-600 mb-1">
               Transit Time (Days)
             </label>
             <input
@@ -201,12 +199,12 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
               required
               value={transitDays}
               onChange={(e) => setTransitDays(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-sky-500"
+              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs font-mono focus:outline-none focus:border-blue-600"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
-              Quote Validity (Days)
+            <label className="block text-[11px] font-medium text-gray-600 mb-1">
+              Validity (Days)
             </label>
             <input
               type="number"
@@ -214,18 +212,18 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
               required
               value={validityDays}
               onChange={(e) => setValidityDays(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-sky-500"
+              className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-900 text-xs font-mono focus:outline-none focus:border-blue-600"
             />
           </div>
         </div>
 
         {/* Total landed price preview & Rank projected badge */}
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+        <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-between">
           <div>
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider block">
-              Total Landed Quote
+            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
+              Calculated Total Quote
             </span>
-            <span className="text-xl font-mono font-black text-white">
+            <span className="text-lg font-mono font-bold text-gray-900">
               ${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -233,46 +231,44 @@ export default function QuoteSubmissionForm({ rfq, currentL1Price, onSubmitQuote
           <div>
             {totalPrice > 0 ? (
               willBeL1 ? (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-sm shadow-emerald-500/10">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
-                  <span>Projected Rank: L1</span>
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">
+                  <Zap className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Projected L1 Leader</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
-                  <span>Non-L1 Bid (+${(totalPrice - currentL1Price).toFixed(2)})</span>
+                <div className="text-xs text-gray-600 bg-gray-200 px-2 py-0.5 rounded font-medium">
+                  Higher than L1 (+${(totalPrice - currentL1Price).toFixed(2)})
                 </div>
               )
             ) : (
-              <span className="text-xs text-slate-500">Enter charges</span>
+              <span className="text-xs text-gray-400">Enter charges</span>
             )}
           </div>
         </div>
 
         {/* Submit button */}
-        <motion.button
-          whileHover={{ scale: isAuctionActive ? 1.02 : 1 }}
-          whileTap={{ scale: isAuctionActive ? 0.98 : 1 }}
+        <button
           type="submit"
           disabled={isSubmitting || !isAuctionActive}
-          className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all ${
+          className={`w-full py-2.5 rounded-lg font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-sm ${
             !isAuctionActive
-              ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50'
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
               : willBeL1
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-emerald-500/20'
-              : 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-sky-500/20'
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
               <span>
-                {!isAuctionActive ? 'Auction Closed for Bidding' : 'Submit Official Quote'}
+                {!isAuctionActive ? 'Auction Closed' : 'Submit Quotation'}
               </span>
             </>
           )}
-        </motion.button>
+        </button>
       </form>
     </div>
   );

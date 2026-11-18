@@ -12,7 +12,6 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Fetch RFQs list
   async function fetchRfqs() {
     try {
       setIsLoading(true);
@@ -50,7 +49,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Navbar */}
       <Navbar
         currentView={currentView}
@@ -83,8 +82,8 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/60 py-6 mt-12 text-center text-xs text-slate-500">
-        <p>GoComet British Reverse Auction RFQ Platform • Built with FastAPI, PostgreSQL & React</p>
+      <footer className="border-t border-gray-200 bg-white py-5 mt-12 text-center text-xs text-gray-500">
+        <p>GoComet British Reverse Auction RFQ Platform • Enterprise Procurement & Bidding System</p>
       </footer>
     </div>
   );

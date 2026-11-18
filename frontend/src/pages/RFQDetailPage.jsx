@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Ship, ShieldAlert, Award, Clock, Zap, RefreshCw, Info, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, ShieldAlert, Zap, RefreshCw, Info, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 import CountdownTimer from '../components/CountdownTimer';
@@ -32,27 +31,24 @@ export default function RFQDetailPage({ rfqId, onBack }) {
   useEffect(() => {
     loadData();
 
-    // Setup WebSocket connection
+    // WebSocket connection
     const ws = createRfqWebSocket(
       rfqId,
       (event) => {
         if (event.type === 'NEW_BID') {
-          // If auction extended, show alert
           if (event.extension_info?.extended) {
             setLastExtensionAlert(event.extension_info);
             setTimeout(() => setLastExtensionAlert(null), 8000);
           }
 
-          // If L1 leader changed, fire confetti celebration!
           if (event.l1_supplier && (!rfq?.lowest_bid_carrier || event.l1_supplier !== rfq?.lowest_bid_carrier)) {
             confetti({
-              particleCount: 50,
-              spread: 60,
-              origin: { y: 0.7 }
+              particleCount: 40,
+              spread: 50,
+              origin: { y: 0.6 }
             });
           }
 
-          // Refresh full state
           loadData();
         }
       },
@@ -62,14 +58,12 @@ export default function RFQDetailPage({ rfqId, onBack }) {
     return () => ws.close();
   }, [rfqId]);
 
-  // Handle quote submission
   async function handleQuoteSubmit(quoteData) {
     const res = await api.submitQuote(rfqId, quoteData);
     await loadData();
     return res;
   }
 
-  // Handle simulated bid
   async function handleSimulateBid(simData) {
     const res = await api.simulateBid(rfqId, simData);
     await loadData();
@@ -78,22 +72,22 @@ export default function RFQDetailPage({ rfqId, onBack }) {
 
   if (isLoading) {
     return (
-      <div className="p-20 text-center rounded-2xl bg-slate-900/50 border border-slate-800">
-        <div className="w-8 h-8 mx-auto border-2 border-sky-500/30 border-t-sky-400 rounded-full animate-spin mb-3" />
-        <p className="text-xs text-slate-400 font-medium">Loading Auction Room...</p>
+      <div className="p-16 text-center rounded-xl bg-white border border-gray-200">
+        <div className="w-6 h-6 mx-auto border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin mb-2" />
+        <p className="text-xs text-gray-500 font-medium">Loading auction details...</p>
       </div>
     );
   }
 
   if (error || !rfq) {
     return (
-      <div className="p-12 text-center rounded-2xl bg-rose-950/20 border border-rose-800/40">
-        <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto mb-3" />
-        <h4 className="text-base font-bold text-white mb-2">Error Loading Auction</h4>
-        <p className="text-xs text-rose-300 mb-4">{error || 'RFQ not found'}</p>
+      <div className="p-10 text-center rounded-xl bg-red-50 border border-red-200">
+        <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+        <h4 className="text-sm font-bold text-gray-900 mb-1">Error Loading Auction</h4>
+        <p className="text-xs text-red-700 mb-3">{error || 'RFQ not found'}</p>
         <button
           onClick={onBack}
-          className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs hover:bg-slate-700"
+          className="px-3.5 py-1.5 rounded-lg bg-gray-900 text-white text-xs hover:bg-gray-800"
         >
           Return to Auctions
         </button>
@@ -104,89 +98,76 @@ export default function RFQDetailPage({ rfqId, onBack }) {
   const currentL1Price = rfq.lowest_bid_amount;
 
   return (
-    <div className="space-y-6">
-      {/* Top Navigation & Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
+            className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-2xs"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-800 text-sky-400 border border-slate-700">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-800 border border-gray-200">
                 {rfq.reference_id}
               </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+              <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${
                 rfq.status === 'ACTIVE'
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                   : rfq.status === 'FORCE_CLOSED'
-                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                  ? 'bg-red-50 text-red-800 border-red-300'
                   : rfq.status === 'CLOSED'
-                  ? 'bg-slate-800 text-slate-400 border-slate-700'
-                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  ? 'bg-gray-100 text-gray-700 border-gray-300'
+                  : 'bg-amber-50 text-amber-800 border-amber-300'
               }`}>
                 {rfq.status.replace('_', ' ')}
               </span>
 
               {rfq.extension_count > 0 && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
-                  <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 font-mono">
+                  <Zap className="w-3 h-3 text-amber-600 fill-amber-600" />
                   <span>Extended {rfq.extension_count}x (+{rfq.extension_count * rfq.extension_duration_minutes}m)</span>
                 </span>
               )}
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-black text-white mt-1">
+            <h1 className="text-xl font-bold text-gray-900 mt-1">
               {rfq.title}
             </h1>
             {rfq.description && (
-              <p className="text-xs text-slate-400 mt-0.5">{rfq.description}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{rfq.description}</p>
             )}
           </div>
         </div>
 
         <button
           onClick={loadData}
-          className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white text-xs font-medium transition-colors"
+          className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors shadow-2xs"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>Refresh</span>
+          <span>Refresh Data</span>
         </button>
       </div>
 
-      {/* Live Extension Toast Banner */}
-      <AnimatePresence>
-        {lastExtensionAlert && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-slate-900 to-amber-500/10 border border-amber-500/40 text-amber-300 flex items-center justify-between gap-4 shadow-2xl shadow-amber-500/10"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                <Zap className="w-5 h-5 fill-amber-400 animate-bounce" />
-              </div>
-              <div>
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-400">
-                  ⚡ British Auction Auto-Extended!
-                </h4>
-                <p className="text-xs text-slate-200 mt-0.5">
-                  {lastExtensionAlert.reason}
-                </p>
-              </div>
+      {/* Extension Alert Banner */}
+      {lastExtensionAlert && (
+        <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <Zap className="w-4 h-4 text-amber-600 shrink-0 fill-amber-600" />
+            <div className="text-xs">
+              <span className="font-bold">British Auction Auto-Extended: </span>
+              <span>{lastExtensionAlert.reason}</span>
             </div>
-            <span className="text-xs font-mono font-bold bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30">
-              +{rfq.extension_duration_minutes}m Added
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+          <span className="text-xs font-mono font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-300 shrink-0">
+            +{rfq.extension_duration_minutes}m
+          </span>
+        </div>
+      )}
 
-      {/* Hero Countdown Timer */}
+      {/* Countdown Timer */}
       <CountdownTimer
         currentCloseTime={rfq.current_bid_close_time}
         forcedCloseTime={rfq.forced_bid_close_time}
@@ -196,48 +177,48 @@ export default function RFQDetailPage({ rfqId, onBack }) {
         status={rfq.status}
       />
 
-      {/* British Auction Config Summary Cards */}
+      {/* Configuration Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
             Trigger Window (X)
           </span>
-          <span className="text-base font-extrabold font-mono text-white">
-            Last {rfq.trigger_window_minutes} Mins
+          <span className="text-sm font-bold font-mono text-gray-900">
+            Last {rfq.trigger_window_minutes} Minutes
           </span>
-          <p className="text-[10px] text-slate-500">Monitors activity before close</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Monitors activity before close</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-            Extension (Y)
+        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
+            Extension Added (Y)
           </span>
-          <span className="text-base font-extrabold font-mono text-white">
-            +{rfq.extension_duration_minutes} Mins
+          <span className="text-sm font-bold font-mono text-gray-900">
+            +{rfq.extension_duration_minutes} Minutes
           </span>
-          <p className="text-[10px] text-slate-500">Added per qualifying trigger</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Added per qualifying trigger</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-            Extension Rule
+        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
+            Trigger Mode
           </span>
-          <span className="text-xs font-extrabold text-indigo-400 font-mono block truncate">
+          <span className="text-xs font-bold text-gray-900 font-mono block truncate">
             {rfq.extension_trigger_type}
           </span>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[11px] text-gray-500 mt-0.5">
             {rfq.extension_trigger_type === 'L1_RANK_CHANGE' ? 'Extends only on new L1' : 'Extends on rank shifts'}
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider block">
+        <div className="p-3 rounded-lg bg-white border border-gray-200 shadow-2xs">
+          <span className="text-[10px] uppercase font-bold text-red-600 tracking-wider block">
             Forced Close Cap
           </span>
-          <span className="text-xs font-extrabold text-rose-300 font-mono block">
+          <span className="text-xs font-bold text-red-700 font-mono block">
             {new Date(rfq.forced_bid_close_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
-          <p className="text-[10px] text-slate-500">Hard stop; no extensions beyond</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">Strict stop; cannot extend beyond</p>
         </div>
       </div>
 
@@ -248,43 +229,43 @@ export default function RFQDetailPage({ rfqId, onBack }) {
         onSimulateBid={handleSimulateBid}
       />
 
-      {/* Main Grid: Left = Leaderboard & Logs, Right = Quote Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Grid: Left = Leaderboard & Logs, Right = Form & Rules */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-5">
           <SupplierRankTable quotes={rfq.quotes} />
           <ActivityLogTimeline logs={rfq.activity_logs} />
         </div>
 
         {/* Right Column (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-5">
           <QuoteSubmissionForm
             rfq={rfq}
             currentL1Price={currentL1Price}
             onSubmitQuote={handleQuoteSubmit}
           />
 
-          {/* Reverse Auction Rules Card */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 text-xs space-y-3">
-            <h4 className="font-bold text-white flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-sky-400" />
-              <span>How this British Auction Works</span>
+          {/* Rules Card */}
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-xs space-y-2.5 shadow-2xs">
+            <h4 className="font-bold text-gray-900 flex items-center gap-1.5">
+              <Info className="w-4 h-4 text-blue-600" />
+              <span>British Reverse Auction Principles</span>
             </h4>
-            <ul className="space-y-2 text-slate-400">
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+            <ul className="space-y-2 text-gray-600">
+              <li className="flex items-start gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
                 <span>
                   <strong>Reverse Bidding:</strong> Lowest total quote (Freight + Origin + Destination) takes <strong>Rank L1</strong> and leads the auction.
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+              <li className="flex items-start gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 mt-1.5 shrink-0" />
                 <span>
                   <strong>Anti-Sniping Extension:</strong> If qualifying bidding occurs in the last <strong>{rfq.trigger_window_minutes} minutes</strong>, the close time automatically pushes back by <strong>{rfq.extension_duration_minutes} minutes</strong>.
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
+              <li className="flex items-start gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 mt-1.5 shrink-0" />
                 <span>
                   <strong>Forced Close Guarantee:</strong> Extensions are strictly capped at <strong>{new Date(rfq.forced_bid_close_time).toLocaleTimeString()}</strong>. Bidding terminates then without exception.
                 </span>
